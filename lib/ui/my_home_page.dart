@@ -1,38 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider_demo/view_models/data_view_model.dart';
-import 'package:tuple/tuple.dart';
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends ConsumerWidget {
   const MyHomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dataState = ref.watch(dataNotifierProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Provider Demo'),
+        title: const Text('Riverpod Demo'),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Consumer<DataViewModel>(
-              builder: (context, dataModel, child) {
-                return Text('Data: ${dataModel.data}');
-              },
+            Text(
+              'Current Data: ${dataState.currentData}',
+              style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Update data using Provider
-                Provider.of<DataViewModel>(context, listen: false)
-                    .updateData('New Data');
-
-                // Example of using a Tuple
-                Tuple2<int, String> tuple = const Tuple2(42, 'Hello');
-                debugPrint('Tuple Example: ${tuple.item1}, ${tuple.item2}');
+                ref
+                    .read(dataNotifierProvider.notifier)
+                    .updateData('Updated Data ${DateTime.now()}');
               },
-              child: const Text('Update Data'),
+              child: const Text('Add Data Update'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                ref.read(dataNotifierProvider.notifier).clearData();
+              },
+              child: const Text('Clear Data'),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: dataState.dataList.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(dataState.dataList[index]),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        ref
+                            .read(dataNotifierProvider.notifier)
+                            .removeDataAt(index);
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
